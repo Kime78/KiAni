@@ -12,12 +12,58 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import kotlin.concurrent.thread
+import kotlin.math.max
 
 class Anime {
     var title: String = ""
-    var img_url: String = ""
+    var imgURL: String = ""
+    var animeID: String = ""
+    var genres: MutableList<String> = mutableListOf<String>()
+    var status: String = ""
+    var type: String = ""
+    var releaseDate: Int = 0
+    var numOfEpisodes: Int = 0
 }
+fun parseAnime(animeID: String) : Anime {
+    val result = Anime()
+    val link = "https://gogoanime.pe/category$animeID"
+    val doc = Jsoup.connect(link).get()
+    val data = doc.getElementsByClass("type")
 
+    //string processing
+    val subtype = data[0].children()[1].attributes()["href"].split('/').last() // "/sub-category/winter-2019-anime"
+    val desc = data[1].textNodes()[0].text()
+    val genre = data[2].children()
+    val test = mutableListOf<String>()
+    for(i in 1 until genre.size){
+        test.add(genre[i].attributes()["href"].split('/').last())
+    }
+    return Anime()
+
+}
+fun getNewSeason(): MutableList<Anime> {
+
+    val anime = mutableListOf<Anime>()
+
+    for(page in 1..3) {
+        val doc = Jsoup.connect("https://gogoanime.pe/new-season.html?page=$page").get()
+        val mainPage : Elements = doc.getElementsByClass("items")
+        val animePage = mainPage[0].children()
+
+        for(a : Element in animePage) {
+            val entity = Anime()
+            val tit = a.children()[0].children()[0].children()[0].attributes()["alt"].toString()
+            val url = a.children()[0].children()[0].children()[0].attributes()["src"].toString()
+            val id = a.children()[0].children()[0].attributes()["href"].toString()
+            entity.title = tit
+            entity.imgURL = url
+            entity.animeID = id
+            anime.add(entity)
+        }
+    }
+
+    return anime
+}
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -43,24 +89,8 @@ class MainActivity : AppCompatActivity() {
             //val search : String = "naruto";
             //https://gogoanime.pe//search.html?keyword=$search
 
-            val anime = mutableListOf<Anime>();
-
-            for(page in 1..3) {
-                val doc = Jsoup.connect("https://gogoanime.pe/new-season.html?page=$page").get();
-                val main_page : Elements = doc.getElementsByClass("items");
-                val anime_page = main_page[0].children();
-
-                for(a : Element in anime_page) {
-                    val entity = Anime();
-                    var tit = a.children()[0].children()[0].children()[0].attributes()["alt"].toString()
-                    val url = a.children()[0].children()[0].children()[0].attributes()["src"].toString()
-                    entity.title = "$tit"
-                    entity.img_url = "$url"
-                    anime.add(entity)
-                }
-            }
-
-            print(0);
+            val test = parseAnime("/kaguya-sama-wa-kokurasetai-tensai-tachi-no-renai-zunousen")
+            print(0)
         }
    }
 }
